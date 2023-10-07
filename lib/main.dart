@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
   }
 
   // funcion para crear la base de datos y agregar datos de ejemplo
-  Future<void> createAndExportDatabase() async {
+ /* Future<void> createAndExportDatabase() async {
     try {
       final manejarbd = Manejarbd();
       final sourceDatabase = await manejarbd.database;
@@ -56,7 +56,6 @@ class MyApp extends StatelessWidget {
           nombre TEXT
         )
       ''');
-
         await txn.rawInsert('INSERT INTO tabla1 (nombre) VALUES (?)', ['x1']);
         await txn.rawInsert('INSERT INTO tabla1 (nombre) VALUES (?)', ['x2']);
       });
@@ -71,5 +70,41 @@ class MyApp extends StatelessWidget {
     } catch (e) {
       print('Error al exportar la base de datos: $e');
     }
+  }*/
+
+// Función para crear la base de datos y agregar datos de ejemplo
+  Future<void> createAndExportDatabase() async {
+    try {
+      final manejarbd = Manejarbd();
+      final sourceDatabase = await manejarbd.database;
+
+      await sourceDatabase!.transaction((txn) async {
+        await txn.execute('''
+        CREATE TABLE IF NOT EXISTS tabla1 (
+          id INTEGER PRIMARY KEY,
+          nombre TEXT
+        )
+      ''');
+        await txn.rawInsert('INSERT INTO tabla1 (nombre) VALUES (?)', ['x1']);
+        await txn.rawInsert('INSERT INTO tabla1 (nombre) VALUES (?)', ['x2']);
+      });
+
+      final externalStorageDir = await getExternalStorageDirectory();
+      final customDirectoryName = 'MiBD'; // Nombre del directorio personalizado
+      final directorio = Directory('${externalStorageDir!.path}/$customDirectoryName');
+
+      // se verifica si el directorio personalizado existe y si no, se crea
+      if (!await directorio.exists()) {
+        await directorio.create();
+      }
+      final destinationPath = join(directorio.path, 'VenAmbulante.db');
+
+      await File(sourceDatabase.path).copy(destinationPath);
+
+      print('Base de datos exportada a: $destinationPath');
+    } catch (e) {
+      print('Error al exportar la base de datos: $e');
+    }
   }
+
 }
